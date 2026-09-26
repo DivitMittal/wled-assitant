@@ -3,6 +3,7 @@
  *
  *  - TXS0108E OE lifecycle (translator held off until WLED's LED output is initialised and idle)
  *  - HTU21D temperature / humidity over WLED's global I2C bus (non-blocking state machine)
+ *  - optional MQTT telemetry + Home Assistant discovery (uses WLED's own MQTT client/config)
  *  - Info/JSON diagnostics, including the USB Adalight path
  *
  * The HyperHDR stream itself is handled by stock WLED (wled00/wled_serial.cpp, Adalight parser
@@ -137,6 +138,14 @@ class WledAssitant : public Usermod {
       const uint32_t now = millis();
       serviceOe(now);
       if (htuEnabled) serviceHtu(now);
+#ifndef WLED_DISABLE_MQTT
+      if (discoveryDirty && WLED_MQTT_CONNECTED) {
+        discoveryDirty = false;
+        publishDiscovery();
+        publishAvailability();
+        publishReadings();
+      }
+#endif
     }
 
     void onUpdateBegin(bool init) override {
@@ -144,6 +153,11 @@ class WledAssitant : public Usermod {
       oeSuspended = init;
       if (init) setOe(false);
     }
+
+#ifndef WLED_DISABLE_MQTT
+    // Runs in the AsyncMqttClient (network) task: only flag the work, loop() publishes.
+    void onMqttConnect(bool sessionPresent) override { discoveryDirty = true; }
+#endif
 
     void addToJsonInfo(JsonObject& root) override {
       JsonObject user = root["u"];
@@ -192,6 +206,9 @@ class WledAssitant : public Usermod {
       top[F("interval")]        = intervalSec;
       top[F("tempOffset")]      = tempOffset;
       top[F("humOffset")]       = humOffset;
+      top[F("mqttPublish")]     = mqttPublish;
+      top[F("haDiscovery")]     = haDiscovery;
+      top[F("discoveryPrefix")] = discoveryPrefix;
       top[F("oeDelayMs")]       = oeDelayMs;
     }
 
@@ -202,7 +219,12 @@ class WledAssitant : public Usermod {
       complete &= getJsonValue(top[F("interval")],    intervalSec, uint16_t(30));
       complete &= getJsonValue(top[F("tempOffset")],  tempOffset,  0.0f);
       complete &= getJsonValue(top[F("humOffset")],   humOffset,   0.0f);
+      complete &= getJsonValue(top[F("mqttPublish")], mqttPublish, true);
+      complete &= getJsonValue(top[F("haDiscovery")], haDiscovery, true);
       complete &= getJsonValue(top[F("oeDelayMs")],   oeDelayMs,   uint16_t(0));
+      const char* prefix = top[F("discoveryPrefix")] | "homeassistant";
+      strlcpy(discoveryPrefix, prefix[0] ? prefix : "homeassistant", sizeof(discoveryPrefix));
+      complete &= !top[F("discoveryPrefix")].isNull();
 
       intervalSec = constrain(intervalSec, 5, 3600);
       if (oeDelayMs > 5000) oeDelayMs = 5000;
@@ -214,6 +236,7 @@ class WledAssitant : public Usermod {
           htuPresent = false;
         }
         nextPollAt = millis();          // apply new settings with a fresh reading
+        discoveryDirty = true;          // republish (or clear) HA discovery
       }
       return complete;
     }
@@ -222,6 +245,7 @@ class WledAssitant : public Usermod {
       s.print(F("addInfo('wled_assitant:interval',1,'s (5-3600)');"));
       s.print(F("addInfo('wled_assitant:tempOffset',1,'°C');"));
       s.print(F("addInfo('wled_assitant:humOffset',1,'%RH');"));
+      s.print(F("addInfo('wled_assitant:mqttPublish',1,'uses the MQTT settings in Sync Interfaces; no broker is fine');"));
       s.print(F("addInfo('wled_assitant:oeDelayMs',1,'ms extra hold before OE goes high (GPIO"));
       s.print(WLEDA_TXS_OE_PIN);
       s.print(F(", fixed at build time)');"));
@@ -237,6 +261,9 @@ class WledAssitant : public Usermod {
     uint16_t intervalSec = 30;
     float    tempOffset  = 0.0f;
     float    humOffset   = 0.0f;
+    bool     mqttPublish = true;
+    bool     haDiscovery = true;
+    char     discoveryPrefix[33] = "homeassistant";
     uint16_t oeDelayMs   = 0;
 
     // ---- OE state ----
@@ -262,6 +289,9 @@ class WledAssitant : public Usermod {
     uint32_t  lastReadingMs = 0;
     float     temperatureC = NAN;
     float     humidityRH   = NAN;
+
+    volatile bool discoveryDirty = false;   // set from the MQTT task
+    bool lastPublishedPresent = false;
 
     // ------------------------------------------------------------------------------------------
     // TXS0108E OE
@@ -334,6 +364,7 @@ class WledAssitant : public Usermod {
       } else {
         nextPollAt = now + RETRY_AFTER_ERROR_MS;
       }
+      publishAvailabilityIfChanged();
     }
 
     void startTemperature(uint32_t now) {
@@ -390,6 +421,8 @@ class WledAssitant : public Usermod {
           consecutiveFails = 0;
           htuState   = HtuState::Idle;
           nextPollAt = now + uint32_t(intervalSec) * 1000;
+          publishAvailabilityIfChanged();
+          publishReadings();
           return;
         }
       }
@@ -410,6 +443,88 @@ class WledAssitant : public Usermod {
         default:                   return F("not read yet");
       }
     }
+
+    // ------------------------------------------------------------------------------------------
+    // MQTT / Home Assistant discovery — strictly optional; every call is a no-op without a broker
+    // ------------------------------------------------------------------------------------------
+#ifndef WLED_DISABLE_MQTT
+    static size_t jsonEscape(char* dst, const char* src, size_t size) {
+      size_t o = 0;
+      for (; *src && o + 2 < size; src++) {
+        const char c = *src;
+        if (c == '"' || c == '\\') dst[o++] = '\\';
+        if (uint8_t(c) >= 0x20) dst[o++] = c;
+      }
+      dst[o] = '\0';
+      return o;
+    }
+
+    bool mqttReady() const { return mqttPublish && WLED_MQTT_CONNECTED && mqttDeviceTopic[0]; }
+
+    void topicFor(char* buf, size_t len, const char* leaf) const {
+      snprintf_P(buf, len, PSTR("%s/htu21d/%s"), mqttDeviceTopic, leaf);
+    }
+
+    void publishDiscoveryEntity(const char* key, const char* name, const char* unit, const char* devClass) {
+      static char topic[128];
+      static char payload[1024];   // static: no per-publish heap churn
+      snprintf_P(topic, sizeof(topic), PSTR("%s/sensor/wled_%s/%s/config"), discoveryPrefix, escapedMac.c_str(), key);
+
+      if (!haDiscovery || !mqttPublish) {        // remove previously announced entity
+        mqtt->publish(topic, 0, true, "");
+        return;
+      }
+
+      char devName[70];
+      jsonEscape(devName, serverDescription, sizeof(devName));
+      const char* m = escapedMac.c_str();         // "aabbccddeeff"
+      snprintf_P(payload, sizeof(payload), PSTR(
+        "{\"name\":\"%s\",\"uniq_id\":\"wled_%s_%s\",\"obj_id\":\"wled_%s_%s\","
+        "\"stat_t\":\"%s/htu21d/%s\",\"unit_of_meas\":\"%s\",\"dev_cla\":\"%s\",\"stat_cla\":\"measurement\","
+        "\"sug_dsp_prec\":1,\"avty_mode\":\"all\",\"avty\":[{\"t\":\"%s/status\"},{\"t\":\"%s/htu21d/status\"}],"
+        "\"dev\":{\"cns\":[[\"mac\",\"%.2s:%.2s:%.2s:%.2s:%.2s:%.2s\"]],\"name\":\"%s\",\"mf\":\"WLED\","
+        "\"mdl\":\"ESP32-S3 SuperMini + HTU21D\",\"sw\":\"%s\"}}"),
+        name, m, key, m, key,
+        mqttDeviceTopic, key, unit, devClass,
+        mqttDeviceTopic, mqttDeviceTopic,
+        m, m + 2, m + 4, m + 6, m + 8, m + 10, devName,
+        versionString);
+      mqtt->publish(topic, 0, true, payload);
+    }
+
+    void publishDiscovery() {
+      if (!WLED_MQTT_CONNECTED || !mqttDeviceTopic[0] || escapedMac.length() < 12) return;
+      publishDiscoveryEntity("temperature", "Temperature", "°C", "temperature");
+      publishDiscoveryEntity("humidity", "Humidity", "%", "humidity");
+    }
+
+    void publishAvailability() {
+      if (!mqttReady()) return;
+      char topic[MQTT_MAX_TOPIC_LEN + 24];
+      topicFor(topic, sizeof(topic), "status");
+      mqtt->publish(topic, 0, true, htuPresent ? "online" : "offline");
+      lastPublishedPresent = htuPresent;
+    }
+
+    void publishAvailabilityIfChanged() {
+      if (htuPresent != lastPublishedPresent) publishAvailability();
+    }
+
+    void publishReadings() {
+      if (!mqttReady() || !readingFresh(millis())) return;
+      char topic[MQTT_MAX_TOPIC_LEN + 24];
+      char value[16];
+      topicFor(topic, sizeof(topic), "temperature");
+      snprintf_P(value, sizeof(value), PSTR("%.1f"), temperatureC);
+      mqtt->publish(topic, 0, true, value);
+      topicFor(topic, sizeof(topic), "humidity");
+      snprintf_P(value, sizeof(value), PSTR("%.1f"), humidityRH);
+      mqtt->publish(topic, 0, true, value);
+    }
+#else
+    void publishAvailabilityIfChanged() {}
+    void publishReadings() {}
+#endif
 };
 
 const char WledAssitant::_name[] PROGMEM = "wled_assitant";
