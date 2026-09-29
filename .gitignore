@@ -14,3 +14,21 @@ result-*
 
 ## upstream WLED checkout (fetched by scripts/bootstrap.sh) and build output
 wled/
+
+## Tools
+.serena/
+*local.json
+
+## APM — generated; do not edit directly
+apm_modules/
+.codex/
+.claude/
+.opencode/
+.mcp.json
+opencode.json
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+GEMINI.md
+**/GEMINI.md
