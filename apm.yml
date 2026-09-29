@@ -1,0 +1,35 @@
+name: wled-assitant
+version: 1.0.0
+description: ESP32-S3 WLED desk ambient light — stock WLED v16.0.1 + one usermod (TXS0108E OE, HTU21D, MQTT/HA), HyperHDR Adalight over USB
+author: DivitMittal
+license: MIT
+target:
+  - claude
+  - codex
+  - opencode
+type: instructions
+
+dependencies:
+  mcp:
+    # semantic code navigation (C++ usermod, Python tools) + project memories
+    - name: serena
+      registry: false
+      transport: stdio
+      command: uvx
+      args:
+        - --from
+        - git+https://github.com/oraios/serena
+        - serena
+        - start-mcp-server
+        - --context
+        - claude-code
+        - --project
+        - ~/Projects/wled-assistant
+    # current docs for WLED, arduino-esp32, ESP-IDF, PlatformIO, HyperHDR, Home Assistant MQTT
+    - name: context7
+      registry: false
+      transport: stdio
+      command: npx
+      args:
+        - -y
+        - "@upstash/context7-mcp"
