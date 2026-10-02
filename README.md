@@ -82,7 +82,19 @@ The sensor is read with direct I2C transactions, so there is no library dependen
 
 ## Build
 
-Requirements: `git`, Node.js ≥ 20, and PlatformIO (`uv tool install platformio`).
+Easiest: `nix develop` (or direnv). The devshell provides PlatformIO, esptool, Node.js, tio, uv, Python with pyserial, clangd and mosquitto clients, plus these commands (run `menu` to list them):
+
+| Command | Does |
+|---|---|
+| `fw-build` | bootstrap pinned WLED and build |
+| `fw-flash <port>` | build and flash over USB |
+| `fw-erase <port>` | erase the whole flash, including WLED settings |
+| `fw-info <port>` | chip, flash size and PSRAM check |
+| `fw-monitor <port>` | serial console with `tio`, which doesn't toggle DTR/RTS |
+| `fw-ports` | list ESP32-S3 USB ports |
+| `fw-compiledb` | generate `compile_commands.json` for clangd/serena |
+
+Without nix you need `git`, Node.js ≥ 20 and PlatformIO (`uv tool install platformio`).
 
 ```sh
 scripts/build.sh
@@ -108,7 +120,7 @@ pio run -e wled_assitant_s3_supermini -t upload --upload-port /dev/cu.usbmodemXX
 Equivalent esptool command (from `wled/`):
 
 ```sh
-esptool.py --chip esp32s3 --port /dev/cu.usbmodemXXXX --baud 921600 write_flash \
+esptool --chip esp32s3 --port /dev/cu.usbmodemXXXX --baud 921600 write-flash \
   0x0     .pio/build/wled_assitant_s3_supermini/bootloader.bin \
   0x8000  .pio/build/wled_assitant_s3_supermini/partitions.bin \
   0xe000  ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
@@ -226,5 +238,5 @@ No voice-specific logic is in the firmware. Assist and voice pipelines use the W
 - **DTR/RTS reset.** On the USB-Serial/JTAG port, the host can reset the chip by asserting RTS while DTR is low. Normal port opens (HyperHDR, pyserial defaults, `cat`) do not do this. Tools that toggle the lines (HyperHDR's ESP handshake, some terminal programs) will reboot WLED.
 - **DIN floats while OE is LOW.** The TXS0108E B-side is high-Z then. If random pixels light on power-up before the first repaint, add a 10–100 k pull-down from DIN to GND on the strip side of the 220 Ω resistor.
 - **TXS0108E drive strength.** It is an auto-direction translator with weak drive and is marginal for WS2812 over long leads. If the first pixel flickers, try a short data lead or a 74AHCT125/SN74HCT245 buffer.
-- **SuperMini variants.** Clones differ. `esptool.py flash_id` should report 4 MB flash, and the boot log or Info should show 2 MB PSRAM. If PSRAM is absent, WLED still runs, falling back to internal RAM. `LOLIN_WIFI_FIX` starts Wi-Fi TX power at 8.5 dBm for the poor on-board antennas; raise it in Config → WiFi if the link is weak. Some boards have an on-board RGB LED on GPIO48, which is unused here.
+- **SuperMini variants.** Clones differ. `fw-info <port>` (`esptool flash-id`) should report 4 MB flash, and the boot log or Info should show 2 MB PSRAM. If PSRAM is absent, WLED still runs, falling back to internal RAM. `LOLIN_WIFI_FIX` starts Wi-Fi TX power at 8.5 dBm for the poor on-board antennas; raise it in Config → WiFi if the link is weak. Some boards have an on-board RGB LED on GPIO48, which is unused here.
 - **Sensor accuracy.** The HTU21D reads the air around it; mount it away from the ESP32, the PSU and the LEDs, or use `tempOffset`.
