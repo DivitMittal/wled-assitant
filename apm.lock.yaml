@@ -1,0 +1,150 @@
+lockfile_version: '1'
+dependencies: []
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/rules/build.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:540adf3abc4b49ac3dc7ebc85819fd2c3d08d75936a0e28fca4e0891c800544a
+- kind: project-relative
+  target: claude
+  value: .claude/rules/memory.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:61ff2755e8055fcc359638a9b6bcb1be84d10b38f16a7f8c6b043fc3510a73b4
+- kind: project-relative
+  target: claude
+  value: .claude/rules/project-knowledge.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:a93ddc0db54381da4b2a8f133590afccfdc429da5b39c622d61a2cef48ad5ec1
+- kind: project-relative
+  target: claude
+  value: .claude/rules/tools.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:883a3c1315440c0cec045a20e1ffa5ad7fbec0b40f0488531851669267bdb409
+- kind: project-relative
+  target: claude
+  value: .claude/rules/usermod.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:774c87e68bbb62561b6015b638b0cfe9eff63488c361546d8eef25b6772ffadd
+- kind: uri
+  target: mcp
+  value: context7
+  runtime: claude
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: serena
+  runtime: claude
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: context7
+  runtime: codex
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: serena
+  runtime: codex
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: context7
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: serena
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+mcp_servers:
+- context7
+- serena
+mcp_configs:
+  context7:
+    name: context7
+    transport: stdio
+    args:
+    - -y
+    - '@upstash/context7-mcp'
+    registry: false
+    command: npx
+  serena:
+    name: serena
+    transport: stdio
+    args:
+    - --from
+    - git+https://github.com/oraios/serena
+    - serena
+    - start-mcp-server
+    - --context
+    - claude-code
+    - --project
+    - ~/Projects/wled-assistant
+    registry: false
+    command: uvx
+mcp_target_servers:
+  claude:
+  - context7
+  - serena
+  codex:
+  - context7
+  - serena
+  opencode:
+  - context7
+  - serena
+local_deployed_files:
+- .claude/rules/build.md
+- .claude/rules/memory.md
+- .claude/rules/project-knowledge.md
+- .claude/rules/tools.md
+- .claude/rules/usermod.md
+local_deployed_file_hashes:
+  .claude/rules/build.md: sha256:540adf3abc4b49ac3dc7ebc85819fd2c3d08d75936a0e28fca4e0891c800544a
+  .claude/rules/memory.md: sha256:61ff2755e8055fcc359638a9b6bcb1be84d10b38f16a7f8c6b043fc3510a73b4
+  .claude/rules/project-knowledge.md: sha256:a93ddc0db54381da4b2a8f133590afccfdc429da5b39c622d61a2cef48ad5ec1
+  .claude/rules/tools.md: sha256:883a3c1315440c0cec045a20e1ffa5ad7fbec0b40f0488531851669267bdb409
+  .claude/rules/usermod.md: sha256:774c87e68bbb62561b6015b638b0cfe9eff63488c361546d8eef25b6772ffadd
