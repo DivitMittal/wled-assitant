@@ -26,6 +26,13 @@ grep -E "usermod object entries|Flash:" <build log>
 
 Negative pin tests: compile the usermod TU (from `pio run -t compiledb`) with `-UWLEDA_TXS_OE_PIN -DWLEDA_TXS_OE_PIN=20` etc. appended — must hit a `static_assert`.
 
+## DEVSHELL (flake/devshells.nix)
+
+- Tools: `platformio` (FHS-wrapped on Linux), `esptool` v5 (binary is `esptool`, subcommands `flash-id`/`write-flash`; no `esptool.py`), `nodejs`, `tio`, `uv`, `python` + pyserial, `clang-tools`, `mosquitto`, `apm`.
+- Commands (category `firmware`): `fw-build`, `fw-flash <port>`, `fw-erase <port>`, `fw-info <port>`, `fw-monitor <port>`, `fw-ports`, `fw-compiledb`. Port-taking commands fail fast without an argument.
+- This Mac is x86_64-darwin → packages come from `nixpkgs-2605` (unstable dropped x86_64-darwin). Check new packages with `nix eval --inputs-from . nixpkgs-2605#<pkg>.version`.
+- Known harmless noise with nix PlatformIO: `Installing Python dependencies … error: externally-managed-environment`. The Tasmota platform tries to pip-install `wheel`, `zopfli` and `tasmota-metrics` into the read-only nix Python. Neither the platform builder nor WLED uses them; the build and upload paths (bundled esptool 4.7.4 + pyserial) were verified to work. Only bundled `espsecure`/`espefuse` lack `cryptography`; use the devshell's `esptool` v5 tools if ever needed.
+
 ## FLASHING
 
 Stop HyperHDR's LED device first (single port owner). `pio run -e wled_assitant_s3_supermini -t upload --upload-port /dev/cu.usbmodemXXXX`; first time add `-t erase`. Recovery: hold BOOT, tap RST.
