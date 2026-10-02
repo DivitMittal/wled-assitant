@@ -43,6 +43,46 @@ in {
           apm = customLib.mkUvxBin pkgs "apm" "--from apm-cli apm";
         };
       };
+      commands = let
+        env = "wled_assitant_s3_supermini";
+      in
+        map (c: c // {category = "firmware";}) [
+          {
+            name = "fw-build";
+            help = "bootstrap pinned WLED + build firmware";
+            command = ''"$PRJ_ROOT/scripts/build.sh" "$@"'';
+          }
+          {
+            name = "fw-flash";
+            help = "build + flash over USB: fw-flash <port> (stop HyperHDR first)";
+            command = ''"$PRJ_ROOT/scripts/build.sh" upload --upload-port "''${1:?usage: fw-flash <port>}"'';
+          }
+          {
+            name = "fw-erase";
+            help = "erase all flash incl. WLED settings: fw-erase <port>";
+            command = ''cd "$PRJ_ROOT/wled" && pio run -e ${env} -t erase --upload-port "''${1:?usage: fw-erase <port>}"'';
+          }
+          {
+            name = "fw-info";
+            help = "chip, flash size and PSRAM check: fw-info <port>";
+            command = ''esptool --chip esp32s3 --port "''${1:?usage: fw-info <port>}" flash-id'';
+          }
+          {
+            name = "fw-monitor";
+            help = "serial console (shares the HyperHDR port): fw-monitor <port>";
+            command = ''tio "''${1:?usage: fw-monitor <port>}"'';
+          }
+          {
+            name = "fw-ports";
+            help = "list candidate USB serial ports";
+            command = ''ls /dev/cu.usbmodem* /dev/ttyACM* 2>/dev/null || echo "no ESP32-S3 USB port found"'';
+          }
+          {
+            name = "fw-compiledb";
+            help = "generate wled/compile_commands.json for clangd/serena";
+            command = ''cd "$PRJ_ROOT/wled" && pio run -e ${env} -t compiledb'';
+          }
+        ];
     };
   };
 }
