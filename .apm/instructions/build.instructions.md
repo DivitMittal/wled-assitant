@@ -28,8 +28,8 @@ Negative pin tests: compile the usermod TU (from `pio run -t compiledb`) with `-
 
 ## DEVSHELL (flake/devshells.nix)
 
-- Tools: `platformio` (FHS-wrapped on Linux), `esptool` v5 (binary is `esptool`, subcommands `flash-id`/`write-flash`; no `esptool.py`), `nodejs`, `tio`, `uv`, `python` + pyserial, `clang-tools`, `mosquitto`, `apm`.
-- Commands (category `firmware`): `fw-build`, `fw-flash <port>`, `fw-erase <port>`, `fw-info <port>`, `fw-monitor <port>`, `fw-ports`, `fw-compiledb`. Port-taking commands fail fast without an argument.
+- Tools: `platformio` (FHS-wrapped on Linux), `esptool` v5 (binary is `esptool`, subcommands `flash-id`/`write-flash`; no `esptool.py`), `nodejs`, `tio`, `uv`, `python` + pyserial, `clang-tools`, `mosquitto`, `jujutsu`, `apm`.
+- Commands (category `firmware`): `fw-build`, `fw-flash <port>`, `fw-erase <port>`, `fw-info <port>`, `fw-monitor <port>`, `fw-ports`, `fw-compiledb`. Port-taking commands fail fast without an argument. Category `worktrees`: `wt-add`, `wt-list`, `wt-rm` (see project knowledge → Local worktrees).
 - This Mac is x86_64-darwin → packages come from `nixpkgs-2605` (unstable dropped x86_64-darwin). Check new packages with `nix eval --inputs-from . nixpkgs-2605#<pkg>.version`.
 - Known harmless noise with nix PlatformIO: `Installing Python dependencies … error: externally-managed-environment`. The Tasmota platform tries to pip-install `wheel`, `zopfli` and `tasmota-metrics` into the read-only nix Python. Neither the platform builder nor WLED uses them; the build and upload paths (bundled esptool 4.7.4 + pyserial) were verified to work. Only bundled `espsecure`/`espefuse` lack `cryptography`; use the devshell's `esptool` v5 tools if ever needed.
 

@@ -60,6 +60,14 @@ Build env name: `wled_assitant_s3_supermini` (extends upstream `esp32s3_4M_qspi`
 
 Colocated **jj** on git (`jj st`, `jj describe`, `jj new`, `jj git push`). `wled/` is gitignored; pin upgrades go through `WLED_TAG` in `scripts/bootstrap.sh`.
 
+### Local worktrees (`.worktrees/`, gitignored)
+
+- Worktrees are **jj workspaces**, not git worktrees: `wt-add <name> [rev]`, `wt-list`, `wt-rm <name>` (devshell). Parallel agents/tasks go in `.worktrees/<name>`.
+- Why not `git worktree`: jj run inside a git worktree resolves to the *main* workspace and would commit its working copy; jj also refuses to colocate inside a git worktree.
+- A workspace has no `.git`, so Nix rejects its own flake ("not tracked"). `.envrc` therefore loads the **main checkout's** flake there; test flake changes from the main checkout.
+- Each workspace has its own `wled/` (and `.pio`), cloned locally from the main checkout's `wled/` by `bootstrap.sh` (a shallow repo can't be a `--reference`). The first build re-downloads PlatformIO libraries.
+- `fw-*` commands act on the current workspace (`jj workspace root`), `wt-*` on the main checkout. `wt-rm` snapshots the workspace before forgetting it, so its changes stay in `jj log`.
+
 ## NOTES
 
 - Spelling is intentional: project/usermod name is **`wled-assitant`** / `wled_assitant` (the directory is `wled-assistant`).

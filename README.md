@@ -36,6 +36,7 @@ wled/                       upstream checkout (gitignored, never edited)
 | `fw-info <port>` | chip, flash size and PSRAM check |
 | `fw-monitor <port>` | serial console that doesn't toggle DTR/RTS |
 | `fw-ports` | list ESP32-S3 USB ports |
+| `wt-add <name>` / `wt-list` / `wt-rm <name>` | local worktrees (jj workspaces) in `.worktrees/` |
 
 Without nix: install Node.js ≥ 20 and PlatformIO, then run `scripts/build.sh` (add `upload --upload-port <port>` to flash). The image lands in `wled/build_output/release/` and uses about 77 % of the 1.5 MB OTA slot. Later updates also work through WLED's Manual OTA page.
 
