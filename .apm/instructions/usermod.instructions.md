@@ -7,13 +7,13 @@ applyTo: "usermods/**"
 
 ## OVERVIEW
 
-Single-file usermod `wled_assitant.cpp` (class `WledAssitant`, registered with `REGISTER_USERMOD`). Owns: TXS0108E OE lifecycle, HTU21D state machine, optional MQTT/HA discovery, `/json/info` diagnostics, and the USB RX queue size. It never renders LEDs.
+Single-file usermod `wled_assitant.cpp` (class `WledAssitant`, registered with `REGISTER_USERMOD`). Owns: HTU21D state machine, optional MQTT/HA discovery, `/json/info` diagnostics, and the USB RX queue size. It never renders LEDs. LED data is driven directly from GPIO5 (3.3V logic, no level shifter) through a 220Ω resistor into DIN — a hardware/voltage choice (PSU trimmed to 4.75V), nothing the usermod controls.
 
 ## WLED v16.0.1 LIFECYCLE (verified in wled00/wled.cpp)
 
 1. C++ static init → usermod **constructor** (earliest hook without core patches)
 2. `Serial.begin(115200)` → FS mount → `deserializeConfigFromFS()` (calls `readFromConfig()` only if cfg has `"um"`; does `Wire.begin` on global I2C pins)
-3. `beginStrip()` → RMT bus created on GPIO6 (`PinOwner::BusDigital`), black frame shown
+3. `beginStrip()` → RMT bus created on GPIO5 (`PinOwner::BusDigital`), black frame shown
 4. `UsermodManager::setup()` → Wi-Fi → `serialCanRX/TX` computed → web server
 5. `loop()`: `handleSerial()` (Adalight) → … → `UsermodManager::loop()` → `strip.service()` (skipped while realtime)
 
@@ -22,13 +22,6 @@ Single-file usermod `wled_assitant.cpp` (class `WledAssitant`, registered with `
 - `ARDUINO_USB_MODE=1` + `ARDUINO_USB_CDC_ON_BOOT=1` ⇒ `Serial` is `HWCDC` (USB-Serial/JTAG). Stock `handleSerial()` parses Adalight from it.
 - HWCDC ISR **drops bytes when its RX queue is full** (no flow control); default queue is 256 B < one 438 B frame. The constructor calls `Serial.setRxBufferSize(WLEDA_USB_RX_BUFFER)` (2048) **before** `Serial.begin()`; `HWCDC::begin()` keeps an existing queue. Never resize later — it would swap the queue under the live ISR.
 - Realtime fallback is stock: `realtimeLock()` per completed frame, `exitRealtime()` after `realtimeTimeoutMs`.
-
-## OE RULES
-
-- Constructor: latch level 0, then `gpio_config` output + internal pull-down; `esp_register_shutdown_handler` drives LOW on `esp_restart()`.
-- `setup()`: `PinManager::allocatePin(OE, true, PinOwner::UM_Unspecified)`; on failure OE stays LOW forever (reported as pin conflict).
-- Enable only when GPIO6 owner is `BusDigital` **and** `!strip.isUpdating()` **and** `oeDelayMs` elapsed; then `strip.trigger()`. Drop LOW if the bus loses GPIO6, and during OTA (`onUpdateBegin`).
-- No fixed boot delays; sensor/MQTT state must never gate OE.
 
 ## HTU21D RULES
 
@@ -44,7 +37,7 @@ Single-file usermod `wled_assitant.cpp` (class `WledAssitant`, registered with `
 
 ## CONVENTIONS
 
-- Pins only via build flags (`WLEDA_LED_DATA_PIN`, `WLEDA_TXS_OE_PIN`, `I2CSDAPIN`, `I2CSCLPIN`); `static_assert`s reject reserved/duplicate pins — keep them when adding pins.
+- Pins only via build flags (`WLEDA_LED_DATA_PIN`, `I2CSDAPIN`, `I2CSCLPIN`); `static_assert`s reject reserved/duplicate pins — keep them when adding pins.
 - Config lives under cfg.json `um.wled_assitant`; `readFromConfig()` returns false when keys are missing so WLED re-saves defaults.
 - No per-frame or per-publish heap allocation; comments only where lifecycle/concurrency is non-obvious.
 - Usermod API reference: `wled/wled00/fcn_declare.h` (`class Usermod`). Inspect source before using any hook — don't trust old usermod examples.
