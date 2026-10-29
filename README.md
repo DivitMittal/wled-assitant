@@ -20,7 +20,7 @@ wled/                       upstream checkout (gitignored, never edited)
 
 - **USB Adalight:** with `ARDUINO_USB_MODE=1` and `ARDUINO_USB_CDC_ON_BOOT=1`, WLED's `Serial` is the S3's hardware USB-Serial/JTAG port, so WLED's stock Adalight parser reads HyperHDR directly. The usermod enlarges the port's receive buffer from 256 B to 2 KB, because the driver silently drops bytes when it fills and one frame is 438 B. 60 fps needs 26 kB/s, a small fraction of USB full speed. When frames stop, WLED returns to the previous effect after its 2.5 s realtime timeout.
 - **Direct LED drive:** DIN is fed straight from GPIO5 (3.3V logic) through a 220Ω series resistor — no level shifter. The LED PSU is trimmed to 4.75V (instead of 5V) so the strip's data-high threshold sits reliably below 3.3V; this is a hardware/voltage choice, nothing for the firmware to control.
-- **HTU21D (SDA 13 / SCL 12):** read with direct I2C commands, no library, without blocking the loop. CRC-checked, every 30 s, recovers after unplugging.
+- **HTU21D (SDA 13 / SCL 12):** read with direct I2C commands, no library, without blocking the loop. CRC-checked (all-zero replies rejected), every 30 s, recovers after unplugging. `/json/info` → `wled_assitant.htu21d` also shows `raw_t` / `raw_rh` and, after a failed read, `last_fault` (e.g. `H zero 00 00 00`).
 - **MQTT:** optional. Once WLED's MQTT is configured, readings and Home Assistant discovery are published and attached to the same device as the WLED light.
 - **Safety nets:** reserved or duplicate pins fail the build (`static_assert`); plain `WLED_DEBUG` is a build error because it would log onto the HyperHDR port (use `WLED_DEBUG_HOST`).
 

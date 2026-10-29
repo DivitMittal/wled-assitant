@@ -150,8 +150,11 @@ class WledAssitant : public Usermod {
         s[F("temp_c")]  = round1(temperatureC);
         s[F("rh_pct")]  = round1(humidityRH);
         s[F("age_s")]   = (millis() - lastReadingMs) / 1000;
+        s[F("raw_t")]   = rawTemp;
+        s[F("raw_rh")]  = rawHum;
       }
       s[F("errors")] = errorCount;
+      if (lastFault[0]) s[F("last_fault")] = lastFault;
       JsonObject u = d.createNestedObject(F("usb"));
       u[F("adalight_rx")] = serialCanRX;
       u[F("streaming")]   = realtimeMode == REALTIME_MODE_ADALIGHT;
@@ -231,6 +234,8 @@ class WledAssitant : public Usermod {
     uint32_t  deadline   = 0;
     uint32_t  nextPollAt = 0;
     uint16_t  rawTemp    = 0;
+    uint16_t  rawHum     = 0;
+    char      lastFault[24] = "";   // why the last read failed, e.g. "H crc 01 FC 3A"; diagnostics only
     uint32_t  lastReadingMs = 0;
     float     temperatureC = NAN;
     float     humidityRH   = NAN;
@@ -254,14 +259,24 @@ class WledAssitant : public Usermod {
     }
 
     // Returns 1 on success, 0 while the sensor NACKs (conversion not finished), -1 on bad data.
-    int8_t readMeasurement(uint16_t& raw) {
+    // An all-zero reply (00 00 00) passes the CRC, so it is rejected separately: a dead humidity
+    // channel returns exactly that. The LSB status bit is deliberately not checked (see HTU21D rules).
+    int8_t readMeasurement(uint16_t& raw, bool humidity) {
       const uint8_t n = Wire.requestFrom(HTU21D_ADDR, uint8_t(3));
+      const char kind = humidity ? 'H' : 'T';
       if (n != 3) {
         while (Wire.available()) Wire.read();
+        snprintf_P(lastFault, sizeof(lastFault), PSTR("%c nack/short (%u B)"), kind, n);
         return 0;
       }
       const uint8_t msb = Wire.read(), lsb = Wire.read(), crc = Wire.read();
-      if (htuCrc8(msb, lsb) != crc) return -1;
+      const bool crcOk    = htuCrc8(msb, lsb) == crc;
+      const bool nonZero  = msb != 0 || lsb != 0;
+      if (!crcOk || !nonZero) {
+        snprintf_P(lastFault, sizeof(lastFault), PSTR("%c %s %02X %02X %02X"),
+                   kind, crcOk ? "zero" : "crc", msb, lsb, crc);
+        return -1;
+      }
       raw = (uint16_t(msb) << 8 | lsb) & 0xFFFC;           // low 2 bits are status, not data
       return 1;
     }
@@ -308,10 +323,14 @@ class WledAssitant : public Usermod {
 
         case HtuState::MeasTemp: {
           if (!timeReached(now, deadline)) return;
-          const int8_t r = readMeasurement(rawTemp);
+          const int8_t r = readMeasurement(rawTemp, false);
           if (r == 0 && ++polls < HTU21D_MAX_POLLS) { deadline = now + HTU21D_POLL_MS; return; }
           if (r != 1) { htuFail(now, HtuStatus::ReadError); return; }
-          if (!sendCommand(HTU21D_TRIG_H_NOHOLD)) { htuFail(now, HtuStatus::ReadError); return; }
+          if (!sendCommand(HTU21D_TRIG_H_NOHOLD)) {
+            strcpy_P(lastFault, PSTR("H trigger nack"));
+            htuFail(now, HtuStatus::ReadError);
+            return;
+          }
           htuState = HtuState::MeasHum;
           deadline = now + HTU21D_H_CONV_MS;
           polls = 0;
@@ -320,8 +339,7 @@ class WledAssitant : public Usermod {
 
         case HtuState::MeasHum: {
           if (!timeReached(now, deadline)) return;
-          uint16_t rawHum = 0;
-          const int8_t r = readMeasurement(rawHum);
+          const int8_t r = readMeasurement(rawHum, true);
           if (r == 0 && ++polls < HTU21D_MAX_POLLS) { deadline = now + HTU21D_POLL_MS; return; }
           if (r != 1) { htuFail(now, HtuStatus::ReadError); return; }
 
@@ -350,7 +368,7 @@ class WledAssitant : public Usermod {
       switch (htuStatus) {
         case HtuStatus::NoBus:     return F("no I2C bus - set SDA/SCL in Usermods settings");
         case HtuStatus::NotFound:  return F("HTU21D not found at 0x40");
-        case HtuStatus::ReadError: return F("read error (CRC/NACK)");
+        case HtuStatus::ReadError: return F("read error (CRC/zero/NACK)");
         case HtuStatus::Ok:        return F("ok");
         default:                   return F("not read yet");
       }

@@ -26,7 +26,7 @@ Single-file usermod `wled_assitant.cpp` (class `WledAssitant`, registered with `
 ## HTU21D RULES
 
 - Direct Wire transactions, no library: soft reset 0xFE (15 ms), no-hold T 0xF3 (≤50 ms), RH 0xF5 (≤16 ms); NACK = still converting → re-poll after 10 ms.
-- CRC-8 poly 0x31 init 0 (datasheet vectors 0x683A→0x7C, 0x4E85→0x6B). **Do not** validate the LSB status bit — datasheet samples contradict the documented meaning.
+- CRC-8 poly 0x31 init 0 (datasheet vectors 0x683A→0x7C, 0x4E85→0x6B). **Do not** validate the LSB status bit — datasheet samples contradict the documented meaning. Do reject an all-zero reply (`00 00 00` passes the CRC): a failed humidity channel returns exactly that (measured 2026-10-29 on a solvent-damaged HTU21D; temperature kept working).
 - `Wire.setTimeOut(15)`; one short transaction per `loop()` step; 3 consecutive failures ⇒ "missing", re-probe each interval.
 
 ## MQTT / HA RULES
