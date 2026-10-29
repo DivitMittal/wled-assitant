@@ -1,14 +1,14 @@
 # wled-assitant
 
-Desk ambient light firmware: an ESP32-S3 SuperMini (ESP32-S3FH4R2, 4 MB flash / 2 MB PSRAM) running **unmodified upstream WLED v16.0.1** plus one usermod. It drives 144 WS2812B LEDs directly from a 3.3V GPIO through a 220Ω series resistor (no level shifter; the LED PSU is trimmed to 4.75V so the strip reliably reads 3.3V logic), takes HyperHDR frames as **Adalight over the board's own USB-C port**, and reads an HTU21D sensor. Wi-Fi stays on for the Web UI, Home Assistant, OTA and optional MQTT.
+Desk ambient light firmware: an ESP32-S3 SuperMini (ESP32-S3FH4R2, 4 MB flash / 2 MB PSRAM) running **unmodified upstream WLED v16.0.1** plus one usermod. It drives 144 WS2812B LEDs directly from a 3.3V GPIO through a 220Ω series resistor (no level shifter; the LED PSU is trimmed to 4.75V so the strip reliably reads 3.3V logic), takes HyperHDR frames as **Adalight over the board's own USB-C port**, and reads a BME280 (temperature / humidity / pressure) sensor. Wi-Fi stays on for the Web UI, Home Assistant, OTA and optional MQTT.
 
-> **Status:** LED output confirmed working on hardware with the direct 3.3V-GPIO-drive wiring (2026-10-08). Other subsystems (HTU21D, MQTT/HA, full HyperHDR streaming) are still untested on hardware — follow the [test sequence](#first-power-test) before relying on them.
+> **Status:** LED output confirmed working on hardware with the direct 3.3V-GPIO-drive wiring (2026-10-08). Other subsystems (BME280 readings, MQTT/HA, full HyperHDR streaming) are still untested on hardware — follow the [test sequence](#first-power-test) before relying on them.
 
 ## Layout
 
 ```
 platformio_override.ini     build env; the only place pins, LED count and current limit are set
-usermods/wled_assitant/     the usermod (HTU21D, MQTT/HA discovery, diagnostics)
+usermods/wled_assitant/     the usermod (BME280, MQTT/HA discovery, diagnostics)
 scripts/bootstrap.sh        clones WLED v16.0.1 into wled/ and refuses a modified core
 scripts/build.sh            bootstrap + web UI + firmware build
 tools/adalight_test.py      sends Adalight frames over USB without HyperHDR
@@ -20,7 +20,8 @@ wled/                       upstream checkout (gitignored, never edited)
 
 - **USB Adalight:** with `ARDUINO_USB_MODE=1` and `ARDUINO_USB_CDC_ON_BOOT=1`, WLED's `Serial` is the S3's hardware USB-Serial/JTAG port, so WLED's stock Adalight parser reads HyperHDR directly. The usermod enlarges the port's receive buffer from 256 B to 2 KB, because the driver silently drops bytes when it fills and one frame is 438 B. 60 fps needs 26 kB/s, a small fraction of USB full speed. When frames stop, WLED returns to the previous effect after its 2.5 s realtime timeout.
 - **Direct LED drive:** DIN is fed straight from GPIO5 (3.3V logic) through a 220Ω series resistor — no level shifter. The LED PSU is trimmed to 4.75V (instead of 5V) so the strip's data-high threshold sits reliably below 3.3V; this is a hardware/voltage choice, nothing for the firmware to control.
-- **HTU21D (SDA 13 / SCL 12):** read with direct I2C commands, no library, without blocking the loop. CRC-checked, every 30 s, recovers after unplugging.
+- **BME280 (SDA 13 / SCL 12, address 0x76 or 0x77):** temperature, humidity and pressure, read with direct I2C commands, no library, without blocking the loop, every 30 s; recovers after unplugging. A **BMP280** (often sold as a "BME280", no humidity sensor) is rejected, and `last_fault` names its chip ID (`id 58 @76, not BME280`). `/json/info` → `wled_assitant.bme280` has `temp_c`, `rh_pct`, `hpa` (station pressure, not sea-level), the raw ADC values and, after a failed read, `last_fault`.
+- **BME280 wiring:** on the common "5V" breakouts (on-board regulator + I2C level-shifting MOSFETs), power **VIN from 3V3, not 5V** — the MOSFETs pull SDA/SCL up to VIN, and the S3 isn't 5V tolerant. Keep the sensor away from the ESP32, PSU and strip, and never clean it with solvents (that killed the humidity channel of the HTU21D it replaced).
 - **MQTT:** optional. Once WLED's MQTT is configured, readings and Home Assistant discovery are published and attached to the same device as the WLED light.
 - **Safety nets:** reserved or duplicate pins fail the build (`static_assert`); plain `WLED_DEBUG` is a build error because it would log onto the HyperHDR port (use `WLED_DEBUG_HOST`).
 
@@ -63,7 +64,7 @@ Set the smoothing update frequency to 60 Hz.
 
 **Home Assistant:**
 - The **WLED** integration auto-discovers the light.
-- Until you have an MQTT broker, temperature and humidity can come from a REST sensor on `http://<wled-ip>/json/info` (`value_json.wled_assitant.htu21d.temp_c` and `.rh_pct`).
+- Until you have an MQTT broker, temperature and humidity can come from a REST sensor on `http://<wled-ip>/json/info` (`value_json.wled_assitant.bme280.temp_c`, `.rh_pct` and `.hpa`).
 - Later: add a broker and HA's MQTT integration, then enable MQTT in WLED → Sync Interfaces. The sensors then appear on the same device via discovery, with no rebuild needed.
 
 ## First-power test
@@ -78,7 +79,7 @@ Set the smoothing update frequency to 60 Hz.
    ```
    You should see a rainbow; WLED resumes its effect about 2.5 s after the stream stops, and its uptime must not reset when the port opens.
 4. Run HyperHDR for 10+ minutes while using the web UI; unplug and replug USB.
-5. Unplug the HTU21D: within about 40 s Info reports it missing while LEDs keep working; readings return after replugging.
+5. Unplug the BME280: within about 40 s Info reports it missing while LEDs keep working; readings return after replugging.
 
 ## Known limitations
 

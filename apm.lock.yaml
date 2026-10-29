@@ -27,7 +27,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:4e71085ff05788d16131c2a9d2f74422b2e0e0a44bb3c1a264565bb3e16fb46e
+  content_hash: sha256:5d429fe6727dc6863cf6db588acd9a3882005f9013f4e45f129d7c364aa3af25
 - kind: project-relative
   target: claude
   value: .claude/rules/tools.md
@@ -45,7 +45,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:7883bf9cd617d6fc822f5114486d6f15b4424178303aaf7e78aa656527577d46
+  content_hash: sha256:4f6447d530994ab5024988e4b5514b2ba186b56f87a1a8b087cc9e3a12d7ef5d
 - kind: uri
   target: mcp
   value: context7
@@ -54,7 +54,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:645db15ff638b86b64789b32958bb2c4859b1a288aed7e13f77e65544e95e549
 - kind: uri
   target: mcp
   value: serena
@@ -63,7 +63,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:5ccc4c69b83e4580ac0724ddbe88db805eb060962cb679c052289f8ea008790a
 - kind: uri
   target: mcp
   value: context7
@@ -72,7 +72,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:a9723d237eeb5557270613ed4c9394986f9e372e36b8f1feb27837fd0c5544ad
 - kind: uri
   target: mcp
   value: serena
@@ -81,7 +81,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:e84366bc73cdb6992a0c240a68a179acef8b47fd45f2a20821aa52a3ec81e3ab
 - kind: uri
   target: mcp
   value: context7
@@ -145,6 +145,6 @@ local_deployed_files:
 local_deployed_file_hashes:
   .claude/rules/build.md: sha256:5786bedeea9174132c07805feca9eedce02899799c715e2050e1492ca618c813
   .claude/rules/memory.md: sha256:61ff2755e8055fcc359638a9b6bcb1be84d10b38f16a7f8c6b043fc3510a73b4
-  .claude/rules/project-knowledge.md: sha256:4e71085ff05788d16131c2a9d2f74422b2e0e0a44bb3c1a264565bb3e16fb46e
+  .claude/rules/project-knowledge.md: sha256:5d429fe6727dc6863cf6db588acd9a3882005f9013f4e45f129d7c364aa3af25
   .claude/rules/tools.md: sha256:883a3c1315440c0cec045a20e1ffa5ad7fbec0b40f0488531851669267bdb409
-  .claude/rules/usermod.md: sha256:7883bf9cd617d6fc822f5114486d6f15b4424178303aaf7e78aa656527577d46
+  .claude/rules/usermod.md: sha256:4f6447d530994ab5024988e4b5514b2ba186b56f87a1a8b087cc9e3a12d7ef5d
