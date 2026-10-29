@@ -9,7 +9,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:f439236fd83b59b4dae041fccd5a3fcd120f8dc13c94137be4f5becca3963f1d
+  content_hash: sha256:5786bedeea9174132c07805feca9eedce02899799c715e2050e1492ca618c813
 - kind: project-relative
   target: claude
   value: .claude/rules/memory.md
@@ -27,7 +27,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:0eccf1ecb6b263be802bb43d128c534b21bd68aec86b4cf69ad038617ea24510
+  content_hash: sha256:5d429fe6727dc6863cf6db588acd9a3882005f9013f4e45f129d7c364aa3af25
 - kind: project-relative
   target: claude
   value: .claude/rules/tools.md
@@ -45,7 +45,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:774c87e68bbb62561b6015b638b0cfe9eff63488c361546d8eef25b6772ffadd
+  content_hash: sha256:4f6447d530994ab5024988e4b5514b2ba186b56f87a1a8b087cc9e3a12d7ef5d
 - kind: uri
   target: mcp
   value: context7
@@ -54,7 +54,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:645db15ff638b86b64789b32958bb2c4859b1a288aed7e13f77e65544e95e549
 - kind: uri
   target: mcp
   value: serena
@@ -63,7 +63,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:5ccc4c69b83e4580ac0724ddbe88db805eb060962cb679c052289f8ea008790a
 - kind: uri
   target: mcp
   value: context7
@@ -72,7 +72,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:a9723d237eeb5557270613ed4c9394986f9e372e36b8f1feb27837fd0c5544ad
 - kind: uri
   target: mcp
   value: serena
@@ -81,7 +81,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: null
+  content_hash: sha256:e84366bc73cdb6992a0c240a68a179acef8b47fd45f2a20821aa52a3ec81e3ab
 - kind: uri
   target: mcp
   value: context7
@@ -143,8 +143,8 @@ local_deployed_files:
 - .claude/rules/tools.md
 - .claude/rules/usermod.md
 local_deployed_file_hashes:
-  .claude/rules/build.md: sha256:f439236fd83b59b4dae041fccd5a3fcd120f8dc13c94137be4f5becca3963f1d
+  .claude/rules/build.md: sha256:5786bedeea9174132c07805feca9eedce02899799c715e2050e1492ca618c813
   .claude/rules/memory.md: sha256:61ff2755e8055fcc359638a9b6bcb1be84d10b38f16a7f8c6b043fc3510a73b4
-  .claude/rules/project-knowledge.md: sha256:0eccf1ecb6b263be802bb43d128c534b21bd68aec86b4cf69ad038617ea24510
+  .claude/rules/project-knowledge.md: sha256:5d429fe6727dc6863cf6db588acd9a3882005f9013f4e45f129d7c364aa3af25
   .claude/rules/tools.md: sha256:883a3c1315440c0cec045a20e1ffa5ad7fbec0b40f0488531851669267bdb409
-  .claude/rules/usermod.md: sha256:774c87e68bbb62561b6015b638b0cfe9eff63488c361546d8eef25b6772ffadd
+  .claude/rules/usermod.md: sha256:4f6447d530994ab5024988e4b5514b2ba186b56f87a1a8b087cc9e3a12d7ef5d
