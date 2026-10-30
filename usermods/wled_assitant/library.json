@@ -1,7 +1,7 @@
 {
   "name": "wled-assitant",
   "version": "1.0.0",
-  "description": "ESP32-S3 desk ambient light: BMP280 sensor, optional MQTT/HA discovery, USB Adalight diagnostics",
+  "description": "ESP32-S3 desk ambient light: BMP280 + DHT11 sensors, optional MQTT/HA discovery, USB Adalight diagnostics",
   "build": { "libArchive": false },
   "dependencies": {}
 }
