@@ -7,7 +7,7 @@ applyTo: "**"
 
 ## OVERVIEW
 
-Custom firmware = **unmodified upstream WLED v16.0.1** + one usermod. ESP32-S3 SuperMini (ESP32-S3FH4R2: 4 MB flash, 2 MB quad PSRAM) drives 144 WS2812B LEDs directly from a 3.3V GPIO through a 220Ω series resistor (no level shifter; LED PSU trimmed to 4.75V so the strip reliably reads 3.3V logic — confirmed working on hardware 2026-10-08), receives HyperHDR frames as **Adalight over the board's native USB-C port**, reads a BMP280 (temperature / pressure, no humidity), and keeps Wi-Fi for Web UI / JSON API / HA WLED integration / OTA / optional MQTT.
+Custom firmware = **unmodified upstream WLED v16.0.1** + one usermod. ESP32-S3 SuperMini (ESP32-S3FH4R2: 4 MB flash, 2 MB quad PSRAM) drives 144 WS2812B LEDs directly from a 3.3V GPIO through a 220Ω series resistor (no level shifter; LED PSU trimmed to 4.75V so the strip reliably reads 3.3V logic — confirmed working on hardware 2026-10-08), receives HyperHDR frames as **Adalight over the board's native USB-C port**, reads a BMP280 (temperature / pressure) and a DHT11 (humidity; dew point from both), and keeps Wi-Fi for Web UI / JSON API / HA WLED integration / OTA / optional MQTT.
 
 ## STRUCTURE
 
@@ -37,8 +37,9 @@ Custom firmware = **unmodified upstream WLED v16.0.1** + one usermod. ESP32-S3 S
 | --- | --- | --- |
 | LED data | 5 | → 220 Ω → DIN, direct 3.3V logic; no level shifter (TXS0108E removed) |
 | BMP280 SCL / SDA | 13 / 12 | WLED global I2C; addr 0x76 (measured 2026-10-30; 0x77 also probed); breakout may have pull-ups. 5V boards: VIN on 3V3 (their MOSFET shifters pull SDA/SCL to VIN) |
+| DHT11 DATA | 1 | RMT RX channel 4 (polled, no ISR); module VCC on 3V3 (its pull-up must not reach 5V); 3-pin modules have the pull-up |
 | USB D−/D+ | 19 / 20 | USB-Serial/JTAG — reserved |
-| UART0 TX/RX | 43 / 44 | WLED disables serial RX (Adalight) if 44 is allocated |
+| UART0 TX/RX | 43 / 44 | Keep free (`static_assert`). WLED sets `serialCanRX`/`serialCanTX` from their allocation (`wled.cpp`), unaware that `Serial` is USB: 44 allocated ⇒ no Adalight; 43 allocated ⇒ no serial replies ("Ada" greeting, Improv, serial JSON, `adalight_test.py --probe`). The ROM boot log also toggles 43 at power-on. The DHT11 was first soldered to TX and moved to GPIO1 for this (2026-11-08) |
 
 LED PSU is trimmed to **4.75V** (not 5V) so the strip's data-high threshold reliably reads a direct 3.3V GPIO signal — measured/confirmed working 2026-10-08. Out of spec per the WS2812 datasheet (nominal threshold 0.7×VDD); works on the tested strip/PSU, not guaranteed for other batches — fallback is a level shifter (e.g. 74AHCT125) between GPIO5 and DIN if it becomes unreliable.
 
@@ -73,4 +74,4 @@ Colocated **jj** on git (`jj st`, `jj describe`, `jj new`, `jj git push`). `wled
 
 - Spelling is intentional: project/usermod name is **`wled-assitant`** / `wled_assitant` (the directory is `wled-assistant`).
 - `README.md` holds user-facing docs (flashing, HyperHDR, Home Assistant, test checklist, limitations). Keep it in sync with behaviour changes.
-- LED output (direct 3.3V GPIO drive at 4.75V PSU) is hardware-confirmed as of 2026-10-08. BMP280 temperature/pressure confirmed 2026-10-30 (replaces an HTU21D whose humidity channel died after solvent cleaning; a part sold as "BME280 5V" turned out to be a BMP280, chip ID 0x58, and was kept); MQTT/HA and full HyperHDR streaming are still unverified on hardware; claims about them come from source analysis.
+- LED output (direct 3.3V GPIO drive at 4.75V PSU) is hardware-confirmed as of 2026-10-08. BMP280 temperature/pressure confirmed 2026-10-30 (replaces an HTU21D whose humidity channel died after solvent cleaning; a part sold as "BME280 5V" turned out to be a BMP280, chip ID 0x58, and was kept); DHT11 driver runs on hardware with no sensor attached (2026-11-03: `no response`, i.e. the RMT capture completes; LEDs 43 fps and a 60 fps Adalight stream unaffected) — a real DHT11 is not read yet; MQTT/HA and full HyperHDR streaming are still unverified on hardware; claims about them come from source analysis.
