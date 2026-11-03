@@ -24,7 +24,7 @@ scripts/build.sh                           # must end in SUCCESS, no warnings fr
 grep -E "usermod object entries|Flash:" <build log>
 ```
 
-Negative pin tests: compile the usermod TU (from `pio run -t compiledb`) with `-UWLEDA_TXS_OE_PIN -DWLEDA_TXS_OE_PIN=20` etc. appended — must hit a `static_assert`.
+Negative pin tests: compile the usermod TU (from `pio run -t compiledb`) with `-UWLEDA_LED_DATA_PIN -DWLEDA_LED_DATA_PIN=20` etc. appended — must hit a `static_assert`.
 
 ## DEVSHELL (flake/devshells.nix)
 
