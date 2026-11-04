@@ -15,6 +15,9 @@ ______________________________________________________________________
         <img src='https://img.shields.io/static/v1.svg?style=for-the-badge&label=WLED&message=v16.0.1&logo=espressif' alt="wled"/>
     </a>
     <img src='https://img.shields.io/static/v1.svg?style=for-the-badge&label=Board&message=ESP32--S3%20SuperMini&logo=espressif' alt="board"/>
+    <a href='https://github.com/DivitMittal/wled-assitant/blob/main/LICENSE'>
+        <img src='https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=HONCL--1.0&logo=unlicense' alt="license"/>
+    </a>
 </div>
 
 ______________________________________________________________________
@@ -43,6 +46,7 @@ ______________________________________________________________________
 - [First-Power Test](#first-power-test)
 - [Known Limitations](#known-limitations)
 - [Related Repositories](#related-repositories)
+- [License](#license)
 - [For AI Agents](#for-ai-agents)
 
 ______________________________________________________________________
@@ -165,6 +169,12 @@ ______________________________________________________________________
 - [wled/WLED](https://github.com/wled/WLED): Upstream firmware, pinned at v16.0.1 and never patched
 - [awawa-dev/HyperHDR](https://github.com/awawa-dev/HyperHDR): Screen-capture ambient lighting host that streams the Adalight frames
 - [DivitMittal/infra-nixCfg](https://github.com/DivitMittal/infra-nixCfg): Main Nix configurations repository
+
+## License
+
+This repository's own code and docs are under [HONCL-1.0](./LICENSE) (non-commercial, copyleft, attribution required, no AI use).
+
+Built firmware images contain upstream WLED, which is licensed under [EUPL-1.2-or-later](https://github.com/wled/WLED/blob/main/LICENSE). Per §6 of HONCL-1.0, distributed firmware binaries are governed by WLED's EUPL, not by HONCL's non-commercial or AI terms.
 
 ## For AI Agents
 
