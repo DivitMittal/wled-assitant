@@ -36,7 +36,7 @@ Custom firmware = **unmodified upstream WLED v16.0.1** + one usermod. ESP32-S3 S
 | Signal | GPIO | Notes |
 | --- | --- | --- |
 | LED data | 5 | → 220 Ω → DIN, direct 3.3V logic; no level shifter (TXS0108E removed) |
-| BMP280 SCL / SDA | 13 / 12 | WLED global I2C; addr 0x76 (measured 2026-10-30; 0x77 also probed); breakout may have pull-ups. 5V boards: VIN on 3V3 (their MOSFET shifters pull SDA/SCL to VIN) |
+| BMP280 SCL / SDA | 3 / 12 | WLED global I2C; SCL moved 13 → 3 after a pad lifted (2026-11-08). GPIO3 is a strapping pin (JTAG source), only read if eFuse STRAP_JTAG_SEL is burned; the breakout's pull-up selects the default anyway; addr 0x76 (measured 2026-10-30; 0x77 also probed); breakout may have pull-ups. 5V boards: VIN on 3V3 (their MOSFET shifters pull SDA/SCL to VIN) |
 | DHT11 DATA | 1 | RMT RX channel 4 (polled, no ISR); module VCC on 3V3 (its pull-up must not reach 5V); 3-pin modules have the pull-up |
 | USB D−/D+ | 19 / 20 | USB-Serial/JTAG — reserved |
 | UART0 TX/RX | 43 / 44 | Keep free (`static_assert`). WLED sets `serialCanRX`/`serialCanTX` from their allocation (`wled.cpp`), unaware that `Serial` is USB: 44 allocated ⇒ no Adalight; 43 allocated ⇒ no serial replies ("Ada" greeting, Improv, serial JSON, `adalight_test.py --probe`). The ROM boot log also toggles 43 at power-on. The DHT11 was first soldered to TX and moved to GPIO1 for this (2026-11-08) |

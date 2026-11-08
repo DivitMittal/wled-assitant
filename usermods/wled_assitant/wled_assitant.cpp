@@ -56,10 +56,12 @@
 namespace {
 
 // GPIOs that are safe for this project on an ESP32-S3FH4R2 (quad flash + quad PSRAM in package):
-// excludes strapping pins (0, 3, 45, 46), USB D-/D+ (19, 20), flash/PSRAM bus (22..32) and
-// UART0 (43, 44 — WLED disables serial RX, i.e. Adalight, if GPIO44 is allocated).
+// excludes strapping pins 0, 45, 46, USB D-/D+ (19, 20), flash/PSRAM bus (22..32) and UART0
+// (43, 44 — WLED disables serial RX, i.e. Adalight, if GPIO44 is allocated, and serial replies
+// if GPIO43 is). Strapping pin 3 is allowed: it only selects the JTAG source when the
+// STRAP_JTAG_SEL eFuse is burned (it isn't by default), and a pulled-up line selects the default.
 constexpr bool s3PinUsable(int p) {
-  return (p >= 1 && p <= 18 && p != 3) || p == 21 || (p >= 33 && p <= 42) || p == 47 || p == 48;
+  return (p >= 1 && p <= 18) || p == 21 || (p >= 33 && p <= 42) || p == 47 || p == 48;
 }
 static_assert(s3PinUsable(WLEDA_LED_DATA_PIN), "LED data pin is reserved/boot-critical on ESP32-S3");
 static_assert(s3PinUsable(I2CSDAPIN),          "I2C SDA pin is reserved/boot-critical on ESP32-S3");
