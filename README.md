@@ -2,7 +2,7 @@
 
 Desk ambient light firmware: an ESP32-S3 SuperMini (ESP32-S3FH4R2, 4 MB flash / 2 MB PSRAM) running **unmodified upstream WLED v16.0.1** plus one usermod. It drives 144 WS2812B LEDs directly from a 3.3V GPIO through a 220Ω series resistor (no level shifter; the LED PSU is trimmed to 4.75V so the strip reliably reads 3.3V logic), takes HyperHDR frames as **Adalight over the board's own USB-C port**, and reads a BMP280 (temperature / pressure) and a DHT11 (humidity). Wi-Fi stays on for the Web UI, Home Assistant, OTA and optional MQTT.
 
-> **Status:** LED output (2026-10-08) and BMP280 readings (2026-10-30) confirmed working on hardware. The DHT11 driver runs on the board (it reports "not responding" with no sensor attached, 2026-11-03) but hasn't read a real DHT11 yet. MQTT/HA and full HyperHDR streaming are still untested on hardware — follow the [test sequence](#first-power-test) before relying on them.
+> **Status:** LED output (2026-10-08) and BMP280 readings (2026-10-30) confirmed working on hardware. DHT11 humidity and dew point confirmed on hardware 2026-11-09. MQTT/HA and full HyperHDR streaming are still untested on hardware — follow the [test sequence](#first-power-test) before relying on them.
 
 ## Layout
 
@@ -87,7 +87,7 @@ Set the smoothing update frequency to 60 Hz.
 
 ## Known limitations
 
-- **Not hardware-tested yet:** MQTT/HA, long HyperHDR sessions and a real DHT11.
+- **Not hardware-tested yet:** MQTT/HA and long HyperHDR sessions.
 - **No USB flow control:** a WLED stall over about 75 ms (e.g. saving settings) can cause one bad frame before the parser resyncs.
 - **DTR/RTS:** tools that drop DTR while asserting RTS reset the chip. Normal port opens don't.
 - **DIN floats at power-on** (GPIO5 isn't driven until WLED's strip init runs, ~1 s after power-on): if stray pixels light briefly, add a 10–100 kΩ pull-down on DIN.
