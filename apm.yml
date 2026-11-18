@@ -2,7 +2,7 @@ name: wled-assitant
 version: 1.0.0
 description: ESP32-S3 WLED desk ambient light — stock WLED v16.0.1 + one usermod (TXS0108E OE, HTU21D, MQTT/HA), HyperHDR Adalight over USB
 author: DivitMittal
-license: MIT
+license: LicenseRef-HONCL-1.0
 target:
   - claude
   - codex
