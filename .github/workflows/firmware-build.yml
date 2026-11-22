@@ -18,6 +18,8 @@ jobs:
       uses: nixbuild/nix-quick-install-action@master
     - name: Magic Nix Cache(Use GitHub Actions Cache)
       uses: DeterminateSystems/magic-nix-cache-action@main
+    - name: Allow unprivileged user namespaces
+      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - name: Cache PlatformIO packages
       uses: actions/cache@v4
       with:

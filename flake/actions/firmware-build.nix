@@ -26,6 +26,12 @@ in {
         common-actions
         ++ [
           {
+            ## nixpkgs' platformio is FHS-wrapped with bubblewrap, which
+            ## Ubuntu 24.04 runners block via AppArmor's userns restriction.
+            name = "Allow unprivileged user namespaces";
+            run = "sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0";
+          }
+          {
             name = "Cache PlatformIO packages";
             uses = "actions/cache@v4";
             "with" = {
