@@ -54,7 +54,7 @@ uv run --with pyserial tools/adalight_test.py <port> --probe     # "WLED 16.0.1 
 apm install && apm compile                     # regenerate agent rules / MCP config from .apm + apm.yml
 ```
 
-Build env name: `wled_assitant_s3_supermini` (extends upstream `esp32s3_4M_qspi`, board `lolin_s3_mini`). Validation = successful compile; there are no C++ unit tests. Flash usage is ~76.5 % of the 1.5 MB OTA slot — watch it.
+Build env name: `wled_assitant_s3_supermini` (extends upstream `esp32s3_4M_qspi`, board `lolin_s3_mini`). Validation = successful compile (`firmware-build` CI workflow) plus host checks: `nix flake check` runs `tests/` (pytest: Adalight encoder, pin/RX-buffer config) and shellcheck; there are no C++ unit tests. Flash usage is ~76.5 % of the 1.5 MB OTA slot — watch it.
 
 ## VCS
 
