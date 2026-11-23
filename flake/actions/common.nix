@@ -11,6 +11,10 @@
           "flake.nix"
           "flake.lock"
           "flake/**"
+          "tests/**"
+          "tools/**"
+          "scripts/**"
+          "platformio_override.ini"
         ];
       };
       pull_request = push;

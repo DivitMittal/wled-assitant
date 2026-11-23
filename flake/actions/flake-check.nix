@@ -12,8 +12,13 @@
         common-actions
         ++ [
           {
-            name = "Run nix flake check";
+            name = "Evaluate flake for all systems";
             run = "nix -vL flake check --impure --all-systems --no-build";
+          }
+          {
+            # --no-build above only evaluates; this actually runs the test suites and hooks.
+            name = "Build checks (pytest, pre-commit hooks)";
+            run = "nix -L flake check --impure";
           }
         ];
     };
